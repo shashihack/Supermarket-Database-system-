@@ -1,0 +1,79 @@
+
+
+set search_path to walmart;
+select distinct cust_id,type_name,amount from invoicedetails natural join customer natural join customertype 
+where invoicedetails.amount > 2000 and customertype.type_name='Platinum';
+
+ques 1 ) no. of platinum card holder who shopped for more than rs 20000.
+ ans) 
+set search_path to walmart;
+select count(distinct cust_id) from invoicedetails natural join customer natural join customertype 
+where invoicedetails.amount > 2000 and customertype.type_name='Platinum';
+
+
+ques 2) LIST DETAILS OF PRODUCT which are brought through mode_of_payment = Paytm  and conatined offer_id= KHUSIWALIDILWALI
+
+ans) set search_path to walmart;
+select * from (select DISTINCT product_id from (select inv_id from InvoiceDetails as i join PaymentMode as p on (i.payment_mode_id=p.payment_mode_id)
+where mode_of_payment='Paytm')as d join Buys as b on(d.inv_id=b.invoice_id)) as s join Product as pro
+on(s.product_id=pro.product_id) where offer_id='KHUSIWALIDIWALI';
+
+
+
+ques 3) list details of product sold whose category id begins with MF and stored in warehouse ending with 002.
+
+set search_path to walmart;
+set search_path to walmart;
+select distinct product_id , product_type,category_id from buys natural join product natural join category where
+category.warehouse_no like '%002' and
+product.category_id like 'MF%';
+
+
+ques 4) if someone shops on 2017-12-31 list all offers on that day
+
+ans)set search_path to walmart;
+select offers_id,offers_type,offers_details from OfferDetails where offers_start_date < '2016-12-31' and offers_end_date > '2016-12-31';
+
+ques 5) list incahrge name , incharge id and gender of block incharge whose product was never returned.
+
+ans)set search_path to walmart;
+select employee_name, employee_id ,gender from (select block_incharge_id from block except select block_incharge_id from 
+(select store_id from (select distinct category_id from ReturnSlip as rs join
+Product as p on(rs.product_id=p.product_id))as e 
+join category as c on(e.category_id=c.category_id))as f join block as b on (f.store_id=b.block_id))as bl join employee as emp 
+on(bl.block_incharge_id=emp.employee_id);
+
+ques 6) list product id, product type, warehouse count and block count of products which were returned and whose block count is 30 % greater than warehouse count
+
+ans) set search_path to walmart;
+select  p.product_id,p.product_type,p.warehouse_count,p.block_count from returnslip as r join
+Product as p on(r.product_id=p.product_id) where block_count > 0.3 * warehouse_count; 
+
+ques 7)
+
+ans)set search_path to walmart;
+select distinct cust_id,type_name from(select DISTINCT cust_id , inv_date ,amount from (select invoice_id ,sum(quantity) from Buys group by invoice_id having sum(quantity)>3 or sum(quantity)=3)
+as p natural join InvoiceDetails where amount >3000 and inv_date='2015-03-05' )as j natural join Customer as c natural join 
+CustomerType where CustomerType.type_name='Platinum';
+
+ques 8) list product id and quantity of products sold under offer OFF10 
+ans )
+set search_path to walmart;
+select product_id, count(product_id) , sum(quantity) as quan_max  from buys natural join product 
+where offer_id='OFF10'
+group by product_id order by sum(quantity) desc 
+;
+
+ques 9) list employee  name and id who is incharge of grocery department.
+set search_path to walmart;
+select  distinct employee_name,employee_id from employee inner join block on(employee_id=block_incharge_id) 
+inner join category on (block_id=store_id) where block_name='Grocery';
+
+ques 10)list the offer id and quantity of product under that offer which were returned.
+
+ans) set search_path to walmart;
+select max,offer_id from
+(select offer_id ,sum(quantity) as max from returnslip natural join product group by offer_id) as r2
+natural join
+(select max(sum) as max from (select sum(quantity) as sum,offer_id from returnslip natural join product group by offer_id) 
+as r1) as r3 where r3.max=r2.max;
